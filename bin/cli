@@ -1,0 +1,61 @@
+class Cli
+  attr_accessor :url, :user
+  def initialize
+    @url = nil
+    @user = nil
+  end
+
+  def get_email
+    puts "Please enter an email address"
+    email = gets.chomp
+    @user = User.find_by(email: email)
+    @user = User.create!(email: email) unless @user
+  end
+
+  def get_url
+    puts "Please enter your URL"
+    @url = gets.chomp
+  end
+
+  def run
+    input = nil
+    get_email
+    until input == 'quit'
+      input = get_input
+      case input
+      when '0'
+        shorten
+      when '1'
+        lengthen
+      end
+    end
+    puts 'Exiting now, goodbye!'
+  end
+
+  def shorten
+    get_url
+    p @url
+    shortened_url = ShortenedUrl.create_for_user_and_long_url!(@user, @url)
+    Visit.record_visit!(@user, shortened_url)
+    Launchy.open (@url)
+    puts "Your shortened URL is #{shortened_url.short_url}, write it down!"
+  end
+
+  def lengthen
+    get_url
+    url = ShortenedUrl.find_by(short_url: @url)
+    Visit.record_visit!(@user, url)
+    Launchy.open (url.long_url)
+  end
+
+  def get_input
+    puts "Waddaya wanna do?"
+    puts "0. Create shortened URL"
+    puts "1. Visit shortened URL"
+    puts "quit. Quit the program"
+    gets.chomp
+  end
+
+end
+
+Cli.new.run
